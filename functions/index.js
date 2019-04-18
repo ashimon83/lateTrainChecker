@@ -11,11 +11,7 @@ exports.checkLateTrains = functions.https.onRequest(async (request, response) =>
   const res = await fetch('https://rti-giken.jp/fhc/api/train_tetsudo/delay.json')
   const lateLines = await res.json()
   const lateLineNames = lateLines.map(line => line.name)
-
-  const querySnapshot = await linesCollection.get()
-  const docSnapShots = querySnapshot.docs
-  const checkLines = docSnapShots.map(docSnapShot => docSnapShot.data())
-  const checkLinesNames = [...new Set(checkLines.map(line => line.name))]
+  const checkLinesNames = await getCheckLineNames()
   const notifyLineNames = checkLinesNames.filter(lineName => lateLineNames.indexOf(lineName) >= 0)
   const sendStr = `:train: *今遅れてる路線* :clock8:
   ${notifyLineNames.join(`
@@ -27,4 +23,14 @@ exports.checkLateTrains = functions.https.onRequest(async (request, response) =>
   } catch (err) {
     response.send(err)
   }
+})exports.showCheckLines = functions.https.onRequest(async (request, response) => {
+  const checkLineNames = await getCheckLineNames()
+  response.send({response_type: 'in_channel', text: checkLineNames.filter(name => name).join(' ')})
 })
+
+const getCheckLineNames = async () => {
+  const querySnapshot = await linesCollection.get()
+  const docSnapShots = querySnapshot.docs
+  const checkLines = docSnapShots.map(docSnapShot => docSnapShot.data())
+  return [...new Set(checkLines.map(line => line.name))]
+}
