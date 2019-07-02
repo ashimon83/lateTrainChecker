@@ -8,7 +8,7 @@ const db = admin.firestore()
 const linesCollection = db.collection('lines')
 
 exports.checkLateTrains = functions.https.onRequest(async (request, response) => {
-  const res = await fetch('https://rti-giken.jp/fhc/api/train_tetsudo/delay.json')
+  const res = await fetch('https://tetsudo.rti-giken.jp/free/delay.json')
   const lateLines = await res.json()
   const lateLineNames = lateLines.map(line => line.name)
   const checkLinesNames = await getCheckLineNames()
@@ -23,7 +23,9 @@ exports.checkLateTrains = functions.https.onRequest(async (request, response) =>
   } catch (err) {
     response.send(err)
   }
-})exports.showCheckLines = functions.https.onRequest(async (request, response) => {
+})
+
+exports.showCheckLines = functions.https.onRequest(async (request, response) => {
   const checkLineNames = await getCheckLineNames()
   response.send({response_type: 'in_channel', text: checkLineNames.filter(name => name).join(' ')})
 })
